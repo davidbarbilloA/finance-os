@@ -10,6 +10,29 @@ export function PrivateGuard({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (!loading && (!user || !isAdmin)) {
+            // #region agent log
+            try {
+                if (typeof fetch !== 'undefined') {
+                    fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
+                        body: JSON.stringify({
+                            sessionId: '8d1efa',
+                            runId: 'pre-fix',
+                            hypothesisId: 'H4_private_guard_redirect_loop',
+                            location: 'src/components/layout/PrivateGuard.tsx:redirect',
+                            message: 'redirecting to /login from PrivateGuard',
+                            data: {
+                                hasUser: !!user,
+                                isAdmin,
+                                loading,
+                            },
+                            timestamp: Date.now(),
+                        }),
+                    }).catch(() => {})
+                }
+            } catch {}
+            // #endregion
             router.replace('/login')
         }
     }, [user, loading, isAdmin, router])

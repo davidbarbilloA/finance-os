@@ -7,13 +7,12 @@ import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 function StatCard({
-    label, value, icon: Icon, color, trend
+    label, value, icon: Icon, color
 }: {
     label: string
     value: number
     icon: React.ElementType
     color: 'emerald' | 'red' | 'blue' | 'amber'
-    trend?: number
 }) {
     const colorMap = {
         emerald: 'text-emerald-400 bg-emerald-400/10',
@@ -38,7 +37,7 @@ function StatCard({
 }
 
 export default function DashboardPage() {
-    const { movimientos, loading } = useMovimientos()
+    const { movimientos, loading, error } = useMovimientos()
 
     // Calcular resumen del mes actual
     const resumen = useMemo(() => {
@@ -80,6 +79,12 @@ export default function DashboardPage() {
                     {format(new Date(), "MMMM yyyy", { locale: es })}
                 </p>
             </div>
+
+            {error && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
+                    <p className="text-amber-300 text-sm">{error}</p>
+                </div>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

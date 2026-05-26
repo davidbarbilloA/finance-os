@@ -8,19 +8,50 @@ import toast from 'react-hot-toast'
 
 export function useMovimientos() {
     const { user } = useAuthContext()
-    const [movimientos, setMovimientos] = useState<Movimiento[]>([])
-    const [loading, setLoading] = useState(true)
+    const [movimientos, setMovimientos] = useState<Movimiento[] | null>(null)
     const [error, setError] = useState<string | null>(null)
 
     // Suscripción en tiempo real al cargar
     useEffect(() => {
         if (!user) return
 
-        setLoading(true)
-        const unsubscribe = MovimientosService.suscribir(user.uid, (data) => {
-            setMovimientos(data)
-            setLoading(false)
-        })
+        // #region agent log
+        try {
+            if (typeof fetch !== 'undefined') {
+                fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
+                    body: JSON.stringify({
+                        sessionId: '8d1efa',
+                        runId: 'firestore-permission-debug',
+                        hypothesisId: 'H10_firestore_rules_deny',
+                        location: 'src/hooks/useMovimientos.ts:useEffect',
+                        message: 'starting movimientos realtime subscription',
+                        data: { hasUser: !!user, userUid: user.uid },
+                        timestamp: 0,
+                    }),
+                }).catch(() => {})
+            }
+        } catch {}
+        // #endregion
+
+        const unsubscribe = MovimientosService.suscribir(
+            user.uid,
+            (data) => {
+                setMovimientos(data)
+                setError(null)
+            },
+            (err) => {
+                setMovimientos([])
+                const message = err.message ?? 'Error al cargar movimientos'
+                setError(message)
+                if (err.code === 'permission-denied') {
+                    toast.error('Firestore sin permisos. Actualiza las reglas de seguridad.')
+                } else {
+                    toast.error('No se pudieron cargar los movimientos')
+                }
+            }
+        )
 
         return unsubscribe // cleanup automático
     }, [user])
@@ -52,5 +83,7 @@ export function useMovimientos() {
         }
     }, [])
 
-    return { movimientos, loading, error, crear, actualizar, eliminar }
+    const loading = !!user && movimientos === null
+
+    return { movimientos: movimientos ?? [], loading, error, crear, actualizar, eliminar }
 }

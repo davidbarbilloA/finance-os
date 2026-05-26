@@ -30,11 +30,74 @@ export default function LoginPage() {
         setServerError('')
 
         try {
+            // #region agent log
+            try {
+                if (typeof fetch !== 'undefined') {
+                    fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
+                        body: JSON.stringify({
+                            sessionId: '8d1efa',
+                            runId: 'pre-fix',
+                            hypothesisId: 'H5_login_submit_started',
+                            location: 'src/app/(auth)/login/page.tsx:onSubmit',
+                            message: 'login submit started',
+                            data: { hasEmail: !!data.email },
+                            timestamp: 0,
+                        }),
+                    }).catch(() => {})
+                }
+            } catch {}
+            // #endregion
+
             await AuthService.login(data.email, data.password)
+
+            // #region agent log
+            try {
+                if (typeof fetch !== 'undefined') {
+                    fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
+                        body: JSON.stringify({
+                            sessionId: '8d1efa',
+                            runId: 'pre-fix',
+                            hypothesisId: 'H5_login_success_before_router',
+                            location: 'src/app/(auth)/login/page.tsx:onSubmit',
+                            message: 'AuthService.login succeeded; routing to /dashboard',
+                            data: {},
+                            timestamp: 0,
+                        }),
+                    }).catch(() => {})
+                }
+            } catch {}
+            // #endregion
             router.replace('/dashboard')
         } catch (err) {
             const message = AuthService.getErrorMessage(err as AuthError)
             setServerError(message)
+
+            // #region agent log
+            try {
+                if (typeof fetch !== 'undefined') {
+                    fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
+                        body: JSON.stringify({
+                            sessionId: '8d1efa',
+                            runId: 'pre-fix',
+                            hypothesisId: 'H5_login_error_caught',
+                            location: 'src/app/(auth)/login/page.tsx:onSubmit-catch',
+                            message: 'login failed; showing serverError',
+                            data: {
+                                errorCode: (err as AuthError)?.code ?? 'unknown',
+                                errorMessageLength: message.length,
+                            },
+                            timestamp: 0,
+                        }),
+                    }).catch(() => {})
+                }
+            } catch {}
+            // #endregion
         } finally {
             setLoading(false)
         }
