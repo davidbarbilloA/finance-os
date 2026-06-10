@@ -1,168 +1,154 @@
-import {
-    collection, addDoc, updateDoc, deleteDoc, doc,
-    getDocs, query, where, orderBy, Timestamp,
-    onSnapshot, QueryConstraint
-} from 'firebase/firestore'
-import { db, auth } from '@/lib/firebase'
+import { createClient } from '@/lib/supabase/client'
 import type { Movimiento, MovimientoInput } from '@/types/movimientos.types'
 
-const COLECCION = 'movimientos'
+// Nombre de la tabla en Supabase
+const TABLA = 'movimientos'
 
-// Convierte documento Firestore → tipo Movimiento
-function docToMovimiento(id: string, data: Record<string, unknown>): Movimiento {
+// Convierte snake_case de PostgreSQL → camelCase de TypeScript
+function rowToMovimiento(row: Record<string, unknown>): Movimiento {
     return {
-        id,
-        ...data,
-        fecha: (data.fecha as Timestamp).toDate(),
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: (data.updatedAt as Timestamp).toDate(),
-    } as Movimiento
+        id: row.id as string,
+        titulo: row.titulo as string,
+        descripcion: row.descripcion as string | undefined,
+        monto: Number(row.monto),
+        tipo: row.tipo as Movimiento['tipo'],
+        categoria: row.categoria as Movimiento['categoria'],
+        metodoPago: row.metodo_pago as Movimiento['metodoPago'],
+        bolsillo: row.bolsillo as string | undefined,
+        fecha: new Date(row.fecha as string),
+        userId: row.user_id as string,
+        createdAt: new Date(row.created_at as string),
+        updatedAt: new Date(row.updated_at as string),
+    }
+}
+
+// Convierte camelCase de TypeScript → snake_case para PostgreSQL
+function movimientoToRow(input: Partial<MovimientoInput>) {
+    return {
+        ...(input.titulo !== undefined && { titulo: input.titulo }),
+        ...(input.descripcion !== undefined && { descripcion: input.descripcion }),
+        ...(input.monto !== undefined && { monto: input.monto }),
+        ...(input.tipo !== undefined && { tipo: input.tipo }),
+        ...(input.categoria !== undefined && { categoria: input.categoria }),
+        ...(input.metodoPago !== undefined && { metodo_pago: input.metodoPago }),
+        ...(input.bolsillo !== undefined && { bolsillo: input.bolsillo }),
+        // Guardar solo la fecha (sin hora) en formato ISO YYYY-MM-DD
+        ...(input.fecha !== undefined && {
+            fecha: input.fecha.toISOString().split('T')[0],
+        }),
+    }
 }
 
 export class MovimientosService {
 
     // CREATE
     static async crear(input: MovimientoInput): Promise<string> {
-        const userId = auth.currentUser?.uid
-        if (!userId) throw new Error('No autenticado')
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('No autenticado')
 
-        const docRef = await addDoc(collection(db, COLECCION), {
-            ...input,
-            fecha: Timestamp.fromDate(input.fecha),
-            userId,
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now(),
-        })
-        return docRef.id
+        const { data, error } = await supabase
+            .from(TABLA)
+            .insert({ ...movimientoToRow(input), user_id: user.id })
+            .select('id')
+            .single()
+
+        if (error) throw error
+        return data.id
     }
 
     // READ — con filtros opcionales
     static async obtenerTodos(filtros?: {
         tipo?: string
         categoria?: string
+        busqueda?: string
         desde?: Date
         hasta?: Date
     }): Promise<Movimiento[]> {
-        const userId = auth.currentUser?.uid
-        if (!userId) throw new Error('No autenticado')
+        const supabase = createClient()
 
-        const constraints: QueryConstraint[] = [
-            where('userId', '==', userId),
-            orderBy('fecha', 'desc'),
-        ]
+        let query = supabase
+            .from(TABLA)
+            .select('*')
+            .order('fecha', { ascending: false })
+            .order('created_at', { ascending: false })
 
-        if (filtros?.tipo) constraints.push(where('tipo', '==', filtros.tipo))
-        if (filtros?.categoria) constraints.push(where('categoria', '==', filtros.categoria))
+        // Aplicar filtros opcionales
+        if (filtros?.tipo) query = query.eq('tipo', filtros.tipo)
+        if (filtros?.categoria) query = query.eq('categoria', filtros.categoria)
+        if (filtros?.busqueda) query = query.ilike('titulo', `%${filtros.busqueda}%`)
+        if (filtros?.desde) query = query.gte('fecha', filtros.desde.toISOString().split('T')[0])
+        if (filtros?.hasta) query = query.lte('fecha', filtros.hasta.toISOString().split('T')[0])
 
-        const q = query(collection(db, COLECCION), ...constraints)
-        const snapshot = await getDocs(q)
+        const { data, error } = await query
 
-        return snapshot.docs.map(doc => docToMovimiento(doc.id, doc.data()))
+        if (error) throw error
+        return (data ?? []).map(rowToMovimiento)
+    }
+
+    // READ para el mes actual (dashboard)
+    static async obtenerDelMes(año: number, mes: number): Promise<Movimiento[]> {
+        const supabase = createClient()
+        const inicio = `${año}-${String(mes).padStart(2, '0')}-01`
+        // Último día del mes
+        const fin = new Date(año, mes, 0).toISOString().split('T')[0]
+
+        const { data, error } = await supabase
+            .from(TABLA)
+            .select('*')
+            .gte('fecha', inicio)
+            .lte('fecha', fin)
+            .order('fecha', { ascending: false })
+
+        if (error) throw error
+        return (data ?? []).map(rowToMovimiento)
     }
 
     // UPDATE
     static async actualizar(id: string, input: Partial<MovimientoInput>): Promise<void> {
-        const docRef = doc(db, COLECCION, id)
-        await updateDoc(docRef, {
-            ...input,
-            ...(input.fecha && { fecha: Timestamp.fromDate(input.fecha) }),
-            updatedAt: Timestamp.now(),
-        })
+        const supabase = createClient()
+
+        const { error } = await supabase
+            .from(TABLA)
+            .update(movimientoToRow(input))
+            .eq('id', id)
+
+        if (error) throw error
     }
 
     // DELETE
     static async eliminar(id: string): Promise<void> {
-        await deleteDoc(doc(db, COLECCION, id))
+        const supabase = createClient()
+
+        const { error } = await supabase
+            .from(TABLA)
+            .delete()
+            .eq('id', id)
+
+        if (error) throw error
     }
 
-    // REALTIME — escucha cambios en tiempo real (útil para el dashboard)
-    static suscribir(
-        userId: string,
-        callback: (movimientos: Movimiento[]) => void,
-        onError?: (error: { code?: string; message?: string }) => void
-    ) {
-        // #region agent log
-        try {
-            if (typeof fetch !== 'undefined') {
-                fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
-                    body: JSON.stringify({
-                        sessionId: '8d1efa',
-                        runId: 'firestore-permission-debug',
-                        hypothesisId: 'H10_firestore_rules_deny',
-                        location: 'src/services/movimientos.service.ts:suscribir',
-                        message: 'subscribing to movimientos query',
-                        data: { collection: COLECCION, userId },
-                        timestamp: 0,
-                    }),
-                }).catch(() => {})
-            }
-        } catch {}
-        // #endregion
+    // REALTIME — suscripción a cambios en tiempo real
+    // Equivalente al onSnapshot de Firestore
+    static suscribir(callback: (movimientos: Movimiento[]) => void) {
+        const supabase = createClient()
 
-        const q = query(
-            collection(db, COLECCION),
-            where('userId', '==', userId),
-            orderBy('fecha', 'desc')
-        )
+        const channel = supabase
+            .channel('movimientos_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: TABLA },
+                async () => {
+                    // Al recibir cualquier cambio, recargamos todos los datos
+                    const movimientos = await MovimientosService.obtenerTodos()
+                    callback(movimientos)
+                }
+            )
+            .subscribe()
 
-        return onSnapshot(
-            q,
-            (snapshot) => {
-                const movimientos = snapshot.docs.map(doc =>
-                    docToMovimiento(doc.id, doc.data())
-                )
-
-                // #region agent log
-                try {
-                    if (typeof fetch !== 'undefined') {
-                        fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
-                            body: JSON.stringify({
-                                sessionId: '8d1efa',
-                                runId: 'firestore-permission-debug',
-                                hypothesisId: 'H11_firestore_allow_check',
-                                location: 'src/services/movimientos.service.ts:onSnapshot-next',
-                                message: 'snapshot received',
-                                data: { size: snapshot.size },
-                                timestamp: 0,
-                            }),
-                        }).catch(() => {})
-                    }
-                } catch {}
-                // #endregion
-
-                callback(movimientos)
-            },
-            (error) => {
-                const typedError = error as { code?: string; message?: string }
-                // #region agent log
-                try {
-                    if (typeof fetch !== 'undefined') {
-                        fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
-                            body: JSON.stringify({
-                                sessionId: '8d1efa',
-                                runId: 'firestore-permission-debug',
-                                hypothesisId: 'H10_firestore_rules_deny',
-                                location: 'src/services/movimientos.service.ts:onSnapshot-error',
-                                message: 'snapshot listener error',
-                                data: {
-                                    code: typedError.code,
-                                    message: typedError.message,
-                                },
-                                timestamp: 0,
-                            }),
-                        }).catch(() => {})
-                    }
-                } catch {}
-                // #endregion
-
-                onError?.(typedError)
-            }
-        )
+        // Retorna función de cleanup (igual que Firebase)
+        return () => {
+            supabase.removeChannel(channel)
+        }
     }
 }

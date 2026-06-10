@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import { AuthService } from '@/services/auth.service'
-import { AuthError } from 'firebase/auth'
+import type { AuthError } from '@supabase/supabase-js'
 import { DollarSign, Loader2, Lock, Mail } from 'lucide-react'
 
 const loginSchema = z.object({

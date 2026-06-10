@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from 'react-hot-toast'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
     title: 'FinanceOS — Gestión Personal',
@@ -14,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="es" className="dark">
-            <body className={`${inter.className} bg-gray-950 antialiased`}>
+            <body className="font-sans bg-gray-950 antialiased">
                 <AuthProvider>
                     {children}
                     <Toaster

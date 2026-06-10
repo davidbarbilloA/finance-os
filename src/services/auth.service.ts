@@ -1,82 +1,56 @@
-import {
-    signInWithEmailAndPassword,
-    signOut,
-    AuthError
-} from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { createClient } from '@/lib/supabase/client'
+import type { AuthError } from '@supabase/supabase-js'
 
 export class AuthService {
 
-    // Login — lanza error si el UID no coincide con el admin
     static async login(email: string, password: string) {
-        const credential = await signInWithEmailAndPassword(auth, email, password)
+        const supabase = createClient()
 
-        // Capa extra de seguridad en el cliente
-        const adminUid = process.env.NEXT_PUBLIC_ADMIN_UID
-        const isAllowed = credential.user.uid === adminUid
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
 
-        // #region agent log
-        try {
-            if (typeof fetch !== 'undefined') {
-                fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
-                    body: JSON.stringify({
-                        sessionId: '8d1efa',
-                        runId: 'pre-fix',
-                        hypothesisId: 'H3_admin_uid_missing_or_wrong',
-                        location: 'src/services/auth.service.ts:login',
-                        message: 'admin uid check result',
-                        data: {
-                            hasAdminUid: typeof adminUid === 'string' && adminUid.length > 0,
-                            isAllowed,
-                        },
-                        timestamp: Date.now(),
-                    }),
-                }).catch(() => {})
-            }
-        } catch {}
-        // #endregion
+        if (error) throw error
 
-        if (!isAllowed) {
-            // #region agent log
-            try {
-                if (typeof fetch !== 'undefined') {
-                    fetch('http://127.0.0.1:7708/ingest/40767566-b83b-4b8a-b4d9-1874f3e7c4c7', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d1efa' },
-                        body: JSON.stringify({
-                            sessionId: '8d1efa',
-                            runId: 'pre-fix',
-                            hypothesisId: 'H3_admin_uid_missing_or_wrong',
-                            location: 'src/services/auth.service.ts:login-access-denied',
-                            message: 'signOut because admin uid mismatch',
-                            data: {},
-                            timestamp: Date.now(),
-                        }),
-                    }).catch(() => {})
-                }
-            } catch {}
-            // #endregion
-            await signOut(auth)
+        // Capa extra de seguridad: verificar que sea el admin autorizado
+        if (data.user.id !== process.env.NEXT_PUBLIC_ADMIN_USER_ID) {
+            await supabase.auth.signOut()
             throw new Error('Acceso denegado: usuario no autorizado')
         }
 
-        return credential.user
+        return data.user
     }
 
     static async logout() {
-        await signOut(auth)
+        const supabase = createClient()
+        await supabase.auth.signOut()
     }
 
-    // Traduce errores de Firebase a mensajes amigables en español
-    static getErrorMessage(error: AuthError): string {
-        const messages: Record<string, string> = {
-            'auth/invalid-credential': 'Email o contraseña incorrectos',
-            'auth/user-disabled': 'Esta cuenta ha sido deshabilitada',
-            'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos',
-            'auth/network-request-failed': 'Error de conexión. Revisa tu internet',
+    static async getSession() {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        return session
+    }
+
+    static async getUser() {
+        const supabase = createClient()
+        // getUser() hace una llamada al servidor para validar el JWT — más seguro que getSession()
+        const { data: { user } } = await supabase.auth.getUser()
+        return user
+    }
+
+    // Traducción de errores de Supabase Auth al español
+    static getErrorMessage(error: AuthError | Error): string {
+        if ('status' in error) {
+            const messages: Record<string, string> = {
+                'Invalid login credentials': 'Email o contraseña incorrectos',
+                'Email not confirmed': 'Confirma tu email antes de ingresar',
+                'Too many requests': 'Demasiados intentos. Espera unos minutos',
+                'User not found': 'No existe una cuenta con ese email',
+            }
+            return messages[error.message] ?? error.message
         }
-        return messages[error.code] ?? 'Error desconocido. Intenta de nuevo'
+        return error.message
     }
 }

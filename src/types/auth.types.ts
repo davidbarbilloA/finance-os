@@ -1,5 +1,2 @@
-export interface Usuario {
-    uid: string
-    email: string | null
-    displayName: string | null
-}
+// Ahora usamos el tipo User de Supabase directamente
+export type { User } from '@supabase/supabase-js'

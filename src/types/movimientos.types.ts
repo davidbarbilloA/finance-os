@@ -23,13 +23,14 @@ export type Categoria =
     | 'educacion'
     | 'otro'
 
-export type Bolsillo =
-    | 'general'
-    | 'hogar'
-    | 'ahorro'
-    | 'deudas'
-    | 'inversion'
-    | 'emergencia'
+export interface BolsilloInfo {
+    id: string
+    nombre: string
+    color: string
+    montoObjetivo?: number
+    userId: string
+    createdAt: Date
+}
 
 export interface Movimiento {
     id: string
@@ -39,9 +40,9 @@ export interface Movimiento {
     categoria: Categoria
     tipo: TipoMovimiento
     metodoPago: MetodoPago
-    bolsillo?: Bolsillo
+    bolsillo?: string // Id o nombre del bolsillo asociado
     fecha: Date
-    // Metadatos automáticos de Firestore
+    // Metadatos automáticos
     createdAt: Date
     updatedAt: Date
     userId: string
