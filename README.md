@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FinanceOS
 
-## Getting Started
+Plataforma privada de finanzas personales. Permite registrar ingresos, gastos, ahorros y deudas, organizarlos en bolsillos y visualizar métricas en un dashboard con gráficos.
 
-First, run the development server:
+## Características
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Dashboard** — resumen mensual, gráficos de actividad, distribución de gastos y bolsillos de ahorro
+- **Movimientos** — libro de transacciones con filtros por tipo, categoría y bolsillo
+- **Estadísticas** — tendencias, ranking por categoría, métodos de pago e insights del mes
+- **Bolsillos** — metas de ahorro con progreso visual
+- **Autenticación** — acceso restringido a un usuario administrador (Supabase Auth)
+- **Responsive** — navegación tipo drawer en móvil y layout adaptado a pantallas pequeñas
+
+## Stack tecnológico
+
+| Área | Tecnología |
+|------|------------|
+| Framework | [Next.js 16](https://nextjs.org) (App Router) |
+| UI | React 19, Tailwind CSS 4, Lucide Icons |
+| Gráficos | Recharts |
+| Backend | [Supabase](https://supabase.com) (Auth + PostgreSQL) |
+| Formularios | React Hook Form, Zod |
+| Fechas | date-fns |
+| Deploy | Vercel |
+
+## Estructura del proyecto
+
+```
+src/
+├── app/
+│   ├── (auth)/login/       # Pantalla de inicio de sesión
+│   ├── (private)/          # Rutas protegidas
+│   │   ├── dashboard/
+│   │   ├── movimientos/
+│   │   └── estadisticas/
+│   ├── layout.tsx          # Layout raíz
+│   └── page.tsx            # Redirige a /dashboard
+├── components/layout/      # Sidebar, Header, PrivateShell, PrivateGuard
+├── context/                # AuthContext
+├── hooks/                  # useMovimientos, useBolsillos
+├── lib/supabase/           # Cliente, servidor y middleware
+├── services/               # auth, movimientos, bolsillos
+└── types/                  # Tipos TypeScript del dominio
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Requisitos previos
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js 20+
+- npm (o pnpm / yarn)
+- Proyecto en [Supabase](https://supabase.com) con tablas `movimientos` y `bolsillos`
+- Usuario creado en Supabase Auth
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Variables de entorno
 
-## Learn More
+Crea un archivo `.env.local` en la raíz del proyecto:
 
-To learn more about Next.js, take a look at the following resources:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+NEXT_PUBLIC_ADMIN_USER_ID=uuid-del-usuario-admin
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Descripción |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública (anon) de Supabase |
+| `NEXT_PUBLIC_ADMIN_USER_ID` | UUID del único usuario autorizado a iniciar sesión |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> Solo el usuario cuyo ID coincida con `NEXT_PUBLIC_ADMIN_USER_ID` puede acceder a la aplicación.
 
-## Deploy on Vercel
+## Instalación y desarrollo
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Clonar e instalar dependencias
+npm install
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Servidor de desarrollo
+npm run dev
+```
+
+Abre [http://localhost:3000](http://localhost:3000). La raíz redirige a `/dashboard`; si no hay sesión, el guard te llevará a `/login`.
+
+### Scripts disponibles
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run start` | Servidor de producción |
+| `npm run lint` | ESLint |
+
+## Base de datos (Supabase)
+
+La app espera al menos estas tablas en PostgreSQL:
+
+### `movimientos`
+
+Campos principales: `id`, `titulo`, `descripcion`, `monto`, `tipo`, `categoria`, `metodo_pago`, `bolsillo`, `fecha`, `user_id`, `created_at`, `updated_at`.
+
+Tipos de movimiento: `ingreso`, `gasto`, `ahorro`, `deuda`.
+
+### `bolsillos`
+
+Campos principales: `id`, `nombre`, `color`, `monto_objetivo`, `user_id`, `created_at`.
+
+Configura **Row Level Security (RLS)** para que cada usuario solo acceda a sus propios registros.
+
+## Despliegue en Vercel
+
+1. Conecta el repositorio en [Vercel](https://vercel.com).
+2. Añade las tres variables de entorno en **Project Settings → Environment Variables**.
+3. Despliega:
+
+```bash
+npx vercel --prod
+```
+
+**Nota:** No incluyas paquetes específicos de plataforma (por ejemplo `@tailwindcss/oxide-win32-x64-msvc`) en `dependencies`. Tailwind instala el binario correcto según el SO del servidor.
+
+## Diseño responsive
+
+- **Desktop (`lg+`):** sidebar fijo a la izquierda
+- **Móvil / tablet:** sidebar oculto; menú hamburguesa abre un drawer con overlay
+- Modales, formularios y gráficos adaptados a pantallas pequeñas
+
+## Licencia
+
+Proyecto privado — David Barbillo 2026

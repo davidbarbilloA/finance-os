@@ -225,7 +225,7 @@ export default function EstadisticasPage() {
                         <TrendingUp className="h-4 w-4 text-amber-400" />
                     </div>
                     <div className="space-y-1">
-                        <p className="text-sm font-bold text-white truncate mt-1.5">{metrics.largestCat}</p>
+                        <p className="text-sm font-bold text-white line-clamp-2 mt-1.5">{metrics.largestCat}</p>
                         <p className="text-[10px] text-gray-500">Categoría con mayor flujo de salida</p>
                     </div>
                 </div>
@@ -257,10 +257,10 @@ export default function EstadisticasPage() {
                             <p className="text-xs text-gray-500">Ingresos vs Gastos registrados en los últimos 15 días</p>
                         </div>
                     </div>
-                    <div className="h-64 w-full">
+                    <div className="h-48 sm:h-64 w-full">
                         {mounted && trendData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <LineChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
                                     <XAxis dataKey="name" stroke="#4b5563" fontSize={10} tickLine={false} />
                                     <YAxis stroke="#4b5563" fontSize={10} tickLine={false} />
@@ -290,15 +290,15 @@ export default function EstadisticasPage() {
                             <p className="text-xs text-gray-500">Ranking totalizado de salidas financieras</p>
                         </div>
                     </div>
-                    <div className="h-64 w-full">
+                    <div className="h-48 sm:h-64 w-full">
                         {mounted && categoryData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={categoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <BarChart data={categoryData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                                    <XAxis dataKey="name" stroke="#4b5563" fontSize={10} tickLine={false} />
+                                    <XAxis dataKey="name" stroke="#4b5563" fontSize={10} tickLine={false} angle={-35} textAnchor="end" height={50} />
                                     <YAxis stroke="#4b5563" fontSize={10} tickLine={false} />
                                     <Tooltip
-                                        formatter={(value) => `$${value.toLocaleString('es-CO')}`}
+                                        formatter={(value) => value ? `$${value.toLocaleString('es-CO')}` : ''}
                                         contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '12px' }}
                                     />
                                     <Bar dataKey="monto" fill="#3b82f6" radius={[6, 6, 0, 0]}>
@@ -326,7 +326,7 @@ export default function EstadisticasPage() {
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                        <div className="h-48 w-full flex justify-center">
+                        <div className="h-48 sm:h-64 w-full flex justify-center">
                             {mounted && paymentData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -344,7 +344,7 @@ export default function EstadisticasPage() {
                                             ))}
                                         </Pie>
                                         <Tooltip
-                                            formatter={(value) => `$${value.toLocaleString('es-CO')}`}
+                                            formatter={(value) => value ? `$${value.toLocaleString('es-CO')}` : ''}
                                             contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '12px' }}
                                         />
                                     </PieChart>

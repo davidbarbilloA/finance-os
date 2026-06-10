@@ -276,12 +276,12 @@ export default function DashboardPage() {
                 {/* Charts Area */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-6 space-y-6 shadow-md">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
                                 <h3 className="text-lg font-bold text-white">Actividad Reciente</h3>
                                 <p className="text-xs text-gray-500">Tendencia de ingresos y gastos de la última semana</p>
                             </div>
-                            <div className="flex items-center gap-4 text-xs font-semibold">
+                            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
                                 <span className="flex items-center gap-1.5 text-emerald-400">
                                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                                     Ingresos
@@ -292,10 +292,10 @@ export default function DashboardPage() {
                                 </span>
                             </div>
                         </div>
-                        <div className="h-72 w-full">
+                        <div className="h-56 sm:h-72 w-full">
                             {mounted && chartData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
@@ -414,7 +414,7 @@ export default function DashboardPage() {
                                         <div key={bol.id} className="p-4 bg-gray-950/60 border border-gray-800 rounded-xl hover:border-gray-700 transition-all space-y-3 group relative">
                                             <button
                                                 onClick={() => eliminarBolsillo(bol.id)}
-                                                className="absolute top-3 right-3 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute top-3 right-3 text-gray-600 hover:text-red-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
                                             >
                                                 <X className="h-3.5 w-3.5" />
                                             </button>
@@ -422,7 +422,7 @@ export default function DashboardPage() {
                                                 <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: bol.color }}></span>
                                                 <span className="font-bold text-white text-sm">{bol.nombre}</span>
                                             </div>
-                                            <div className="flex justify-between items-baseline text-xs text-gray-400">
+                                            <div className="flex flex-wrap justify-between items-baseline gap-x-2 gap-y-1 text-xs text-gray-400">
                                                 <span>Ahorrado: <strong className="text-white">${bol.saldo.toLocaleString('es-CO')}</strong></span>
                                                 {bol.montoObjetivo && (
                                                     <span>Meta: ${bol.montoObjetivo.toLocaleString('es-CO')}</span>
@@ -476,8 +476,8 @@ export default function DashboardPage() {
 
             {/* Modal for Nuevo Movimiento */}
             {showMovModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between border-b border-gray-800 pb-3">
                             <h3 className="text-lg font-bold text-white">Registrar Movimiento</h3>
                             <button onClick={() => setShowMovModal(false)} className="text-gray-500 hover:text-white transition-colors">
@@ -485,8 +485,8 @@ export default function DashboardPage() {
                             </button>
                         </div>
                         <form onSubmit={handleCrearMovimiento} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="col-span-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="col-span-1 sm:col-span-2">
                                     <label className="block text-xs font-semibold text-gray-400 mb-1">Título del movimiento</label>
                                     <input 
                                         type="text" required value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ej. Compras Supermercado"
@@ -530,7 +530,7 @@ export default function DashboardPage() {
                                         {METODOS_PAGO.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                                     </select>
                                 </div>
-                                <div className="col-span-2">
+                                <div className="col-span-1 sm:col-span-2">
                                     <label className="block text-xs font-semibold text-gray-400 mb-1">Bolsillo Asociado (Opcional)</label>
                                     <select 
                                         value={bolsilloAsoc} onChange={e => setBolsilloAsoc(e.target.value)}
@@ -540,14 +540,14 @@ export default function DashboardPage() {
                                         {bolsillos.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
                                     </select>
                                 </div>
-                                <div className="col-span-2">
+                                <div className="col-span-1 sm:col-span-2">
                                     <label className="block text-xs font-semibold text-gray-400 mb-1">Fecha</label>
                                     <input 
                                         type="date" required value={fecha} onChange={e => setFecha(e.target.value)}
                                         className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
                                     />
                                 </div>
-                                <div className="col-span-2">
+                                <div className="col-span-1 sm:col-span-2">
                                     <label className="block text-xs font-semibold text-gray-400 mb-1">Descripción</label>
                                     <textarea 
                                         value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Ej. Detalle de compras mensuales" rows={2}
@@ -565,8 +565,8 @@ export default function DashboardPage() {
 
             {/* Modal for Nuevo Bolsillo */}
             {showBolModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between border-b border-gray-800 pb-3">
                             <h3 className="text-lg font-bold text-white">Nuevo Bolsillo</h3>
                             <button onClick={() => setShowBolModal(false)} className="text-gray-500 hover:text-white transition-colors">
@@ -590,7 +590,7 @@ export default function DashboardPage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-gray-400 mb-1">Color representativo</label>
-                                <div className="flex gap-2.5 mt-2">
+                                <div className="flex flex-wrap gap-2 mt-2">
                                     {COLORS.map(c => (
                                         <button
                                             key={c} type="button" onClick={() => setBolColor(c)}

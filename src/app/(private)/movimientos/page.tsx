@@ -185,9 +185,9 @@ export default function MovimientosPage() {
                                                 {bolsilloAsoc && (
                                                     <>
                                                         <span>•</span>
-                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">
-                                                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: bolsilloAsoc.color }}></span>
-                                                            {bolsilloAsoc.nombre}
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 max-w-[120px]">
+                                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: bolsilloAsoc.color }}></span>
+                                                            <span className="truncate">{bolsilloAsoc.nombre}</span>
                                                         </span>
                                                     </>
                                                 )}
@@ -195,7 +195,7 @@ export default function MovimientosPage() {
                                         </div>
                                     </div>
                                     
-                                    <div className="flex items-center gap-4 shrink-0">
+                                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                                         <span className={`font-black text-sm ${
                                             m.tipo === 'ingreso' ? 'text-emerald-400' :
                                             m.tipo === 'gasto' ? 'text-red-400' :
@@ -205,11 +205,11 @@ export default function MovimientosPage() {
                                         </span>
                                         <button
                                             onClick={(e) => handleDelete(m.id, e)}
-                                            className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/5 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                            className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/5 rounded-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>
-                                        <ChevronRight className="h-4 w-4 text-gray-600" />
+                                        <ChevronRight className="h-4 w-4 text-gray-600 hidden sm:block" />
                                     </div>
                                 </div>
                             )
@@ -220,8 +220,8 @@ export default function MovimientosPage() {
 
             {/* Modal for Details / Deletion */}
             {selectedMov && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between border-b border-gray-800 pb-3">
                             <h3 className="text-lg font-bold text-white">Detalle del Movimiento</h3>
                             <button onClick={() => setSelectedMov(null)} className="text-gray-500 hover:text-white transition-colors">
@@ -233,7 +233,7 @@ export default function MovimientosPage() {
                                 <h4 className="text-xs text-gray-500">Título</h4>
                                 <p className="text-base font-bold text-white mt-0.5">{selectedMov.titulo}</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <h4 className="text-xs text-gray-500">Monto</h4>
                                     <p className={`text-lg font-black mt-0.5 ${
@@ -261,7 +261,7 @@ export default function MovimientosPage() {
                                     </p>
                                 </div>
                                 {selectedMov.bolsillo && (
-                                    <div className="col-span-2">
+                                    <div className="col-span-1 sm:col-span-2">
                                         <h4 className="text-xs text-gray-500">Bolsillo Asociado</h4>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: bolsillos.find(b => b.id === selectedMov.bolsillo)?.color || '#10b981' }}></span>
