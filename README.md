@@ -1,58 +1,76 @@
-# FinanceOS
+# FinanceOS – Plataforma de finanzas personales
 
-Plataforma privada de finanzas personales. Permite registrar ingresos, gastos, ahorros y deudas, organizarlos en bolsillos y visualizar métricas en un dashboard con gráficos.
+Plataforma privada para registrar ingresos, gastos, ahorros y deudas, organizarlos en bolsillos y visualizar métricas en un dashboard con gráficos interactivos. Acceso restringido a un único usuario administrador mediante Supabase Auth.
 
-## Características
+## Tech stack
 
+| Capa | Tecnologías |
+|------|-------------|
+| **Frontend** | React 19, Next.js 16 (App Router), TypeScript, Tailwind CSS 4 |
+| **UI / Gráficos** | Lucide Icons, Recharts |
+| **Backend / DB** | Supabase (Auth + PostgreSQL) |
+| **Formularios** | React Hook Form, Zod |
+| **Fechas** | date-fns |
+| **Deploy** | Vercel |
+
+## Estructura del proyecto
+
+```text
+src/
+├── app/
+│   ├── (auth)/login/           # Pantalla de inicio de sesión
+│   ├── (private)/              # Rutas protegidas
+│   │   ├── dashboard/
+│   │   ├── movimientos/
+│   │   └── estadisticas/
+│   ├── layout.tsx              # Layout raíz
+│   └── page.tsx                # Redirige a /dashboard
+├── components/layout/          # Sidebar, Header, PrivateShell, PrivateGuard
+├── context/                    # AuthContext
+├── hooks/                      # useMovimientos, useBolsillos
+├── lib/supabase/               # Cliente, servidor y middleware
+├── services/                   # auth, movimientos, bolsillos
+└── types/                      # Tipos TypeScript del dominio
+```
+
+## Funcionalidades
+
+- **Autenticación** con Supabase Auth — acceso restringido a un único usuario administrador
 - **Dashboard** — resumen mensual, gráficos de actividad, distribución de gastos y bolsillos de ahorro
 - **Movimientos** — libro de transacciones con filtros por tipo, categoría y bolsillo
 - **Estadísticas** — tendencias, ranking por categoría, métodos de pago e insights del mes
 - **Bolsillos** — metas de ahorro con progreso visual
-- **Autenticación** — acceso restringido a un usuario administrador (Supabase Auth)
-- **Responsive** — navegación tipo drawer en móvil y layout adaptado a pantallas pequeñas
+- **Responsive** — drawer en móvil, sidebar fijo en desktop
 
-## Stack tecnológico
+## Sistema de acceso
 
-| Área | Tecnología |
-|------|------------|
-| Framework | [Next.js 16](https://nextjs.org) (App Router) |
-| UI | React 19, Tailwind CSS 4, Lucide Icons |
-| Gráficos | Recharts |
-| Backend | [Supabase](https://supabase.com) (Auth + PostgreSQL) |
-| Formularios | React Hook Form, Zod |
-| Fechas | date-fns |
-| Deploy | Vercel |
+| Rol | Permisos | Acceso |
+|-----|----------|--------|
+| **ADMIN** | Total — registrar movimientos, gestionar bolsillos, ver métricas | Solo el usuario cuyo UUID coincida con `NEXT_PUBLIC_ADMIN_USER_ID` |
 
-## Estructura del proyecto
+> Row Level Security (RLS) en Supabase garantiza que cada usuario solo acceda a sus propios registros.
 
-```
-src/
-├── app/
-│   ├── (auth)/login/       # Pantalla de inicio de sesión
-│   ├── (private)/          # Rutas protegidas
-│   │   ├── dashboard/
-│   │   ├── movimientos/
-│   │   └── estadisticas/
-│   ├── layout.tsx          # Layout raíz
-│   └── page.tsx            # Redirige a /dashboard
-├── components/layout/      # Sidebar, Header, PrivateShell, PrivateGuard
-├── context/                # AuthContext
-├── hooks/                  # useMovimientos, useBolsillos
-├── lib/supabase/           # Cliente, servidor y middleware
-├── services/               # auth, movimientos, bolsillos
-└── types/                  # Tipos TypeScript del dominio
+## Rutas del frontend
+
+| Ruta | Acceso | Descripción |
+|------|--------|-------------|
+| `/login` | Público | Inicio de sesión |
+| `/dashboard` | Autenticado | Resumen mensual y gráficos |
+| `/movimientos` | Autenticado | Libro de transacciones |
+| `/estadisticas` | Autenticado | Tendencias e insights |
+
+## Instalación y ejecución
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/davidbarbilloA/FinanceOS.git
+cd FinanceOS
 ```
 
-## Requisitos previos
+### 2. Variables de entorno
 
-- Node.js 20+
-- npm (o pnpm / yarn)
-- Proyecto en [Supabase](https://supabase.com) con tablas `movimientos` y `bolsillos`
-- Usuario creado en Supabase Auth
-
-## Variables de entorno
-
-Crea un archivo `.env.local` en la raíz del proyecto:
+Crea un archivo `.env.local` en la raíz:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
@@ -64,21 +82,20 @@ NEXT_PUBLIC_ADMIN_USER_ID=uuid-del-usuario-admin
 |----------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública (anon) de Supabase |
-| `NEXT_PUBLIC_ADMIN_USER_ID` | UUID del único usuario autorizado a iniciar sesión |
+| `NEXT_PUBLIC_ADMIN_USER_ID` | UUID del único usuario autorizado |
 
-> Solo el usuario cuyo ID coincida con `NEXT_PUBLIC_ADMIN_USER_ID` puede acceder a la aplicación.
+### 3. Instalar dependencias y levantar el servidor
 
-## Instalación y desarrollo
+**Requisitos:** Node.js 20+
 
 ```bash
-# Clonar e instalar dependencias
 npm install
-
-# Servidor de desarrollo
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000). La raíz redirige a `/dashboard`; si no hay sesión, el guard te llevará a `/login`.
+App disponible en: `http://localhost:3000`
+
+La raíz redirige a `/dashboard`; si no hay sesión activa, el guard redirige a `/login`.
 
 ### Scripts disponibles
 
@@ -89,23 +106,39 @@ Abre [http://localhost:3000](http://localhost:3000). La raíz redirige a `/dashb
 | `npm run start` | Servidor de producción |
 | `npm run lint` | ESLint |
 
-## Base de datos (Supabase)
+## Modelo de datos (Supabase / PostgreSQL)
 
-La app espera al menos estas tablas en PostgreSQL:
+Tablas principales:
+
+- `movimientos`
+- `bolsillos`
+
+Relaciones:
+
+```text
+User 1 ── * Movimiento
+User 1 ── * Bolsillo
+```
 
 ### `movimientos`
 
 Campos principales: `id`, `titulo`, `descripcion`, `monto`, `tipo`, `categoria`, `metodo_pago`, `bolsillo`, `fecha`, `user_id`, `created_at`, `updated_at`.
 
-Tipos de movimiento: `ingreso`, `gasto`, `ahorro`, `deuda`.
+Tipos: `ingreso`, `gasto`, `ahorro`, `deuda`.
 
 ### `bolsillos`
 
 Campos principales: `id`, `nombre`, `color`, `monto_objetivo`, `user_id`, `created_at`.
 
-Configura **Row Level Security (RLS)** para que cada usuario solo acceda a sus propios registros.
+## Build de producción
 
-## Despliegue en Vercel
+```bash
+cd frontend
+npm run build
+npm run start
+```
+
+### Deploy en Vercel
 
 1. Conecta el repositorio en [Vercel](https://vercel.com).
 2. Añade las tres variables de entorno en **Project Settings → Environment Variables**.
@@ -115,14 +148,8 @@ Configura **Row Level Security (RLS)** para que cada usuario solo acceda a sus p
 npx vercel --prod
 ```
 
-**Nota:** No incluyas paquetes específicos de plataforma (por ejemplo `@tailwindcss/oxide-win32-x64-msvc`) en `dependencies`. Tailwind instala el binario correcto según el SO del servidor.
+> **Nota:** No incluyas paquetes específicos de plataforma (p. ej. `@tailwindcss/oxide-win32-x64-msvc`) en `dependencies`. Tailwind instala el binario correcto según el SO del servidor de build.
 
-## Diseño responsive
+## Autor
 
-- **Desktop (`lg+`):** sidebar fijo a la izquierda
-- **Móvil / tablet:** sidebar oculto; menú hamburguesa abre un drawer con overlay
-- Modales, formularios y gráficos adaptados a pantallas pequeñas
-
-## Licencia
-
-Proyecto privado — David Barbillo 2026
+- [@davidbarbilloA](https://github.com/davidbarbilloA)
