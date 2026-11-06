@@ -109,8 +109,7 @@ La raíz redirige a `/dashboard`; si no hay sesión activa, el guard redirige a 
 
 ## Modelo de datos (Supabase / PostgreSQL)
 
-El esquema no está versionado en este repositorio: crea estas tablas en tu proyecto de Supabase. `firestore.rules` no aplica a esta versión, porque la aplicación no usa Firebase.
-
+El esquema no está versionado en este repositorio: crea estas tablas en tu proyecto de Supabase.
 Tablas principales:
 
 - `movimientos`
