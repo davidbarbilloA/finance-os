@@ -7,7 +7,7 @@ Plataforma privada para registrar ingresos, gastos, ahorros y deudas, organizarl
 | Capa | Tecnologías |
 |------|-------------|
 | **Frontend** | React 19, Next.js 16 (App Router), TypeScript, Tailwind CSS 4 |
-| **UI / Gráficos** | Lucide Icons, Recharts |
+| **UI / Gráficos** | Lucide Icons, Recharts, Framer Motion, React Hot Toast |
 | **Backend / DB** | Supabase (Auth + PostgreSQL) |
 | **Formularios** | React Hook Form, Zod |
 | **Fechas** | date-fns |
@@ -30,7 +30,8 @@ src/
 ├── hooks/                      # useMovimientos, useBolsillos
 ├── lib/supabase/               # Cliente, servidor y middleware
 ├── services/                   # auth, movimientos, bolsillos
-└── types/                      # Tipos TypeScript del dominio
+├── types/                      # Tipos TypeScript del dominio
+└── proxy.ts                    # Protege las rutas privadas y actualiza la sesión de Supabase
 ```
 
 ## Funcionalidades
@@ -39,7 +40,7 @@ src/
 - **Dashboard** — resumen mensual, gráficos de actividad, distribución de gastos y bolsillos de ahorro
 - **Movimientos** — libro de transacciones con filtros por tipo, categoría y bolsillo
 - **Estadísticas** — tendencias, ranking por categoría, métodos de pago e insights del mes
-- **Bolsillos** — metas de ahorro con progreso visual
+- **Bolsillos** — metas de ahorro con progreso visual; si Supabase no responde, se guardan en `localStorage`
 - **Responsive** — drawer en móvil, sidebar fijo en desktop
 
 ## Sistema de acceso
@@ -48,7 +49,7 @@ src/
 |-----|----------|--------|
 | **ADMIN** | Total — registrar movimientos, gestionar bolsillos, ver métricas | Solo el usuario cuyo UUID coincida con `NEXT_PUBLIC_ADMIN_USER_ID` |
 
-> Row Level Security (RLS) en Supabase garantiza que cada usuario solo acceda a sus propios registros.
+> Activa Row Level Security (RLS) en Supabase para que cada usuario solo acceda a sus propios registros. Las políticas no están versionadas en este repositorio.
 
 ## Rutas del frontend
 
@@ -64,8 +65,8 @@ src/
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/davidbarbilloA/FinanceOS.git
-cd FinanceOS
+git clone https://github.com/davidbarbilloA/finance-os.git
+cd finance-os
 ```
 
 ### 2. Variables de entorno
@@ -108,6 +109,8 @@ La raíz redirige a `/dashboard`; si no hay sesión activa, el guard redirige a 
 
 ## Modelo de datos (Supabase / PostgreSQL)
 
+El esquema no está versionado en este repositorio: crea estas tablas en tu proyecto de Supabase. `firestore.rules` no aplica a esta versión, porque la aplicación no usa Firebase.
+
 Tablas principales:
 
 - `movimientos`
@@ -133,7 +136,6 @@ Campos principales: `id`, `nombre`, `color`, `monto_objetivo`, `user_id`, `creat
 ## Build de producción
 
 ```bash
-cd frontend
 npm run build
 npm run start
 ```
